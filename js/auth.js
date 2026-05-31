@@ -41,3 +41,17 @@ export async function logout() {
   await signOut(auth);
   window.location.href = 'login.html';
 }
+
+// Toggle show/hide password di form login
+window.togglePassword = function () {
+  const pass = document.getElementById('password');
+  const btn = document.querySelector('.toggle-pass-btn');
+  if (!pass) return;
+  if (pass.type === 'password') {
+    pass.type = 'text';
+    if (btn) btn.textContent = '🙈';
+  } else {
+    pass.type = 'password';
+    if (btn) btn.textContent = '👁️';
+  }
+};

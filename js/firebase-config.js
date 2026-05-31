@@ -1,5 +1,7 @@
 // Firebase Configuration
-// Project: monitoring-iot-29ac6
+// Project: monitoring-92e1e
+// PENTING: Jangan commit file ini ke repository publik.
+// Gunakan Firebase Security Rules untuk membatasi akses data.
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
