@@ -21,7 +21,7 @@ if (form) {
       await signInWithEmailAndPassword(auth, email, password);
       message.textContent = 'Berhasil masuk! Mengalihkan...';
       message.className = 'form-message success';
-      setTimeout(() => (window.location.href = 'dashbord.html'), 800);
+      setTimeout(() => (window.location.href = 'dashboard.html'), 800);
     } catch (err) {
       message.textContent = 'Email atau password salah.';
       message.className = 'form-message error';
