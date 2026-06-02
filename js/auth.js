@@ -17,7 +17,7 @@ if (form) {
     message.textContent = 'Memproses...';
     message.className = 'form-message';
 
-    try {
+    try { 
       await signInWithEmailAndPassword(auth, email, password);
       message.textContent = 'Berhasil masuk! Mengalihkan...';
       message.className = 'form-message success';
