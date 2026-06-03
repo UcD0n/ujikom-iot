@@ -1,178 +1,560 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard | Monitoring IoT</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/dashboard.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* ===== Relay Toggle Switch ===== */
-    .relay-switch {
-      position: relative;
-      display: inline-block;
-      width: 56px;
-      height: 30px;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    .relay-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .relay-slider {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #cbd5e1;
-      border-radius: 30px;
-      transition: 0.3s;
-    }
-    .relay-slider::before {
-      content: "";
-      position: absolute;
-      width: 22px; height: 22px;
-      left: 4px; bottom: 4px;
-      background: white;
-      border-radius: 50%;
-      transition: 0.3s;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    .relay-switch input:checked + .relay-slider {
-      background: #22c55e;
-    }
-    .relay-switch input:checked + .relay-slider::before {
-      transform: translateX(26px);
-    }
-    .relay-switch:hover .relay-slider {
-      filter: brightness(0.95);
-    }
-    /* Badge status sensor */
-    .badge-pill {
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .badge-pill.ok   { background: #dcfce7; color: #15803d; }
-    .badge-pill.warn { background: #fef9c3; color: #a16207; }
-    .badge-pill.err  { background: #fee2e2; color: #b91c1c; }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | Monitoring IoT</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
 </head>
-
 <body>
 
-  <div class="app-shell">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-brand">
-        <img src="img/logo.png" alt="Logo" />
-        <span>Monitoring<strong>IoT</strong></span>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="dashboard.html" class="active">📊 Dashboard</a>
-        <a href="#">🌡 Sensor</a>
-        <a href="#">📈 Riwayat</a>
-        <a href="#">⚙ Pengaturan</a>
-        <a href="#" id="logoutBtn" class="logout">↩ Keluar</a>
-      </nav>
-    </aside>
+    <!-- Hamburger Button (Mobile) -->
+    <button class="hamburger" id="hamburgerBtn" aria-label="Toggle sidebar">☰</button>
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Main -->
-    <main class="main">
-      <header class="topbar">
-        <div>
-          <h1>Dashboard Monitoring</h1>
-          <p class="muted">Selamat datang kembali, pantau perangkat Anda di sini.</p>
-        </div>
-        <div class="topbar-actions">
-          <div class="status-pill"><span class="dot online"></span> Terhubung</div>
-          <div class="avatar">U</div>
-        </div>
-      </header>
+    <div class="app-shell">
 
-      <!-- Stats: hanya Suhu & Cahaya -->
-      <section class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
-        <div class="stat-card gradient-1">
-          <small>🌡 Suhu</small>
-          <h2 id="statSuhu">--°C</h2>
-          <span class="trend up" id="trendSuhu">↑ Memuat...</span>
-        </div>
-        <div class="stat-card gradient-4">
-          <small>☀️ Cahaya</small>
-          <h2 id="statCahaya">-- lx</h2>
-          <span class="trend up" id="trendCahaya">↑ Memuat...</span>
-        </div>
-      </section>
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="logo-icon">📡</div>
+                <span>Monitoring<strong>IoT</strong></span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="active">📊 Dashboard</a>
+                <a href="sensor.html">🌡 Sensor</a>
+                <a href="riwayat.html">📈 Riwayat</a>
+                <a href="pengaturan.html">⚙ Pengaturan</a>
+                <a href="login.html" id="logoutBtn" class="logout">↩ Keluar</a>
+            </nav>
+        </aside>
 
-      <!-- Chart + Table -->
-      <section class="dashboard-grid">
-        <div class="panel">
-          <div class="panel-header">
-            <h3>Grafik Sensor</h3>
-            <select id="rangeSelect">
-              <option>24 Jam Terakhir</option>
-              <option>7 Hari</option>
-              <option>30 Hari</option>
-            </select>
-          </div>
-          <canvas id="sensorChart" height="120"></canvas>
-        </div>
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="main">
 
-        <div class="panel">
-          <div class="panel-header">
-            <h3>Aktivitas Terbaru</h3>
-          </div>
-          <ul class="activity-list" id="activityList">
-            <li><span class="dot online"></span> Sensor A terhubung <small>2 mnt lalu</small></li>
-            <li><span class="dot warn"></span> Suhu naik di Ruang 1 <small>10 mnt lalu</small></li>
-            <li><span class="dot online"></span> Sinkronisasi data berhasil <small>15 mnt lalu</small></li>
-            <li><span class="dot off"></span> Sensor B offline <small>1 jam lalu</small></li>
-          </ul>
-        </div>
-      </section>
+            <!-- Topbar -->
+            <header class="topbar">
+                <div>
+                    <h1>Dashboard Monitoring</h1>
+                    <p class="muted">Selamat datang kembali, pantau perangkat IoT Anda secara real-time.</p>
+                </div>
+                <div class="topbar-actions">
+                    <div class="status-pill" id="connectionPill">
+                        <span class="dot online"></span>
+                        <span id="connectionText">Terhubung</span>
+                    </div>
+                    <div class="avatar" title="User">U</div>
+                </div>
+            </header>
 
-      <!-- Relay Control -->
-      <section class="panel">
-        <div class="panel-header">
-          <h3>⚡ Kontrol Relay</h3>
-          <span class="muted" style="font-size:0.82rem">Klik toggle untuk nyalakan/matikan perangkat</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:20px;padding:16px 0;">
-          <div style="flex:1">
-            <div style="font-weight:600;font-size:1rem;">Relay 1</div>
-            <div class="muted" style="font-size:0.83rem;margin-top:2px;">Perangkat / Lampu</div>
-          </div>
-          <span id="relayLabel" style="font-size:0.9rem;color:var(--muted);min-width:40px;">OFF</span>
-          <label class="relay-switch" title="Toggle Relay 1">
-            <input type="checkbox" id="relayToggle" />
-            <span class="relay-slider"></span>
-          </label>
-        </div>
-        <div id="relayStatus" style="font-size:0.82rem;color:var(--muted);padding-bottom:4px;">Status: Memuat...</div>
-      </section>
+            <!-- Stats Grid: 4 Cards -->
+            <section class="stats-grid">
+                <div class="stat-card gradient-suhu">
+                    <small>🌡 Suhu</small>
+                    <h2 id="statSuhu">--°C</h2>
+                    <span class="trend" id="trendSuhu">↻ Memuat...</span>
+                </div>
+                <div class="stat-card gradient-humi">
+                    <small>💧 Kelembapan</small>
+                    <h2 id="statKelembapan">--%</h2>
+                    <span class="trend" id="trendKelembapan">↻ Memuat...</span>
+                </div>
+                <div class="stat-card gradient-press">
+                    <small>📊 Tekanan</small>
+                    <h2 id="statTekanan">-- hPa</h2>
+                    <span class="trend" id="trendTekanan">↻ Memuat...</span>
+                </div>
+                <div class="stat-card gradient-light">
+                    <small>☀️ Cahaya</small>
+                    <h2 id="statCahaya">-- lx</h2>
+                    <span class="trend" id="trendCahaya">↻ Memuat...</span>
+                </div>
+            </section>
 
-      <!-- Tabel Data -->
-      <section class="panel">
-        <div class="panel-header">
-          <h3>Data Sensor</h3>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr><th>Waktu</th><th>Sensor</th><th>Nilai</th><th>Status</th></tr>
-            </thead>
-            <tbody id="dataTable"></tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  </div>
+            <!-- Chart + Activity -->
+            <section class="dashboard-grid">
+                <!-- Chart Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>📈 Grafik Sensor (Suhu)</h3>
+                        <select id="rangeSelect" aria-label="Rentang waktu grafik">
+                            <option value="24jam">24 Jam Terakhir</option>
+                            <option value="7hari">7 Hari</option>
+                            <option value="30hari">30 Hari</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sensorChart" aria-label="Grafik suhu"></canvas>
+                    </div>
+                </div>
 
-  <!-- dashboard.js harus dimuat sebagai module SEBELUM sensorChart.js -->
-  <script type="module" src="js/dashboard.js"></script>
-  <!-- sensorChart.js dimuat setelah dashboard.js agar window.__sensorData sudah tersedia -->
-  <script src="js/sensorChart.js"></script>
+                <!-- Activity Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>🔔 Aktivitas Terbaru</h3>
+                    </div>
+                    <ul class="activity-list" id="activityList">
+                        <li><span class="dot online"></span> Sistem monitoring aktif <small>Baru saja</small></li>
+                        <li><span class="dot online"></span> Sensor suhu terhubung <small>1 menit lalu</small></li>
+                        <li><span class="dot warn"></span> Suhu ruang server naik <small>5 menit lalu</small></li>
+                        <li><span class="dot online"></span> Sinkronisasi data berhasil <small>12 menit lalu</small></li>
+                        <li><span class="dot off"></span> Sensor cahaya offline <small>1 jam lalu</small></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Relay Control Panel -->
+            <section class="panel" style="margin-bottom: 28px;">
+                <div class="panel-header">
+                    <h3>⚡ Kontrol Relay</h3>
+                    <span class="muted" style="font-size:0.82rem;">Klik toggle untuk menyalakan/mematikan perangkat</span>
+                </div>
+                <div class="relay-control-row">
+                    <div class="relay-info">
+                        <div class="relay-name">Relay 1 - Lampu Utama</div>
+                        <div class="muted" style="font-size:0.82rem;margin-top:2px;">Perangkat penerangan ruang server</div>
+                    </div>
+                    <span class="relay-status-badge off" id="relayBadge">OFF</span>
+                    <label class="relay-switch" title="Toggle Relay 1">
+                        <input type="checkbox" id="relayToggle" />
+                        <span class="relay-slider"></span>
+                    </label>
+                </div>
+                <div id="relayMessage" style="font-size:0.82rem;color:var(--text-muted);padding-top:4px;">
+                    Status: Relay dalam keadaan mati.
+                </div>
+            </section>
+
+            <!-- Data Table Panel -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h3>📋 Data Sensor Terkini</h3>
+                    <span class="muted" style="font-size:0.82rem;">Diperbarui otomatis setiap 5 detik</span>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Sensor</th>
+                                <th>Nilai</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTable">
+                            <!-- Diisi oleh JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- JavaScript -->
+    <script>
+        (function() {
+            // ==================== DOM ELEMENTS ====================
+            const statSuhu = document.getElementById('statSuhu');
+            const statKelembapan = document.getElementById('statKelembapan');
+            const statTekanan = document.getElementById('statTekanan');
+            const statCahaya = document.getElementById('statCahaya');
+            const trendSuhu = document.getElementById('trendSuhu');
+            const trendKelembapan = document.getElementById('trendKelembapan');
+            const trendTekanan = document.getElementById('trendTekanan');
+            const trendCahaya = document.getElementById('trendCahaya');
+            const dataTable = document.getElementById('dataTable');
+            const relayToggle = document.getElementById('relayToggle');
+            const relayBadge = document.getElementById('relayBadge');
+            const relayMessage = document.getElementById('relayMessage');
+            const activityList = document.getElementById('activityList');
+            const connectionPill = document.getElementById('connectionPill');
+            const connectionText = document.getElementById('connectionText');
+            const rangeSelect = document.getElementById('rangeSelect');
+            const toastContainer = document.getElementById('toastContainer');
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            // ==================== CHART.JS INITIALIZATION ====================
+            const ctx = document.getElementById('sensorChart').getContext('2d');
+            let sensorChart;
+            let chartLabels = [];
+            let chartDataSuhu = [];
+            const MAX_CHART_POINTS = 24;
+
+            function createChart() {
+                sensorChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Suhu (°C)',
+                            data: chartDataSuhu,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                            borderWidth: 2.5,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: { size: 12, weight: '600' },
+                                },
+                            },
+                            tooltip: {
+                                backgroundColor: '#1e293b',
+                                titleFont: { weight: 'bold' },
+                                bodyFont: { size: 13 },
+                                padding: 12,
+                                cornerRadius: 8,
+                            },
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: '#f1f5f9' },
+                                ticks: { maxTicksLimit: 12, font: { size: 11 } },
+                            },
+                            y: {
+                                beginAtZero: false,
+                                grid: { color: '#f1f5f9' },
+                                ticks: {
+                                    font: { size: 11 },
+                                    callback: (value) => value + '°C',
+                                },
+                            },
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
+                    },
+                });
+            }
+
+            function updateChartDataset() {
+                if (!sensorChart) return;
+                sensorChart.data.labels = chartLabels;
+                sensorChart.data.datasets[0].data = chartDataSuhu;
+                sensorChart.update('none');
+            }
+
+            function initializeChartData() {
+                const now = new Date();
+                chartLabels = [];
+                chartDataSuhu = [];
+                for (let i = MAX_CHART_POINTS - 1; i >= 0; i--) {
+                    const time = new Date(now - i * 3600000);
+                    const hour = time.getHours().toString().padStart(2, '0');
+                    const minute = time.getMinutes().toString().padStart(2, '0');
+                    chartLabels.push(`${hour}:${minute}`);
+                    chartDataSuhu.push(+(27 + Math.random() * 5).toFixed(1));
+                }
+            }
+
+            function generateSensorData() {
+                const now = new Date();
+                const timeStr = now.toTimeString().slice(0, 5);
+                const suhu = +(27 + Math.random() * 6).toFixed(1);
+                const kelembapan = Math.floor(55 + Math.random() * 30);
+                const tekanan = Math.floor(1005 + Math.random() * 15);
+                const cahaya = Math.floor(300 + Math.random() * 700);
+                return { time: timeStr, suhu, kelembapan, tekanan, cahaya };
+            }
+
+            function determineStatus(value, type) {
+                if (type === 'suhu') {
+                    if (value > 32) return { text: 'Tinggi', class: 'critical' };
+                    if (value > 30) return { text: 'Waspada', class: 'warning' };
+                    return { text: 'Normal', class: 'normal' };
+                }
+                if (type === 'kelembapan') {
+                    if (value > 80) return { text: 'Tinggi', class: 'warning' };
+                    if (value < 60) return { text: 'Rendah', class: 'warning' };
+                    return { text: 'Normal', class: 'normal' };
+                }
+                if (type === 'tekanan') {
+                    if (value > 1015) return { text: 'Tinggi', class: 'warning' };
+                    if (value < 1008) return { text: 'Rendah', class: 'warning' };
+                    return { text: 'Normal', class: 'normal' };
+                }
+                if (type === 'cahaya') {
+                    if (value > 800) return { text: 'Terang', class: 'normal' };
+                    if (value < 400) return { text: 'Redup', class: 'warning' };
+                    return { text: 'Normal', class: 'normal' };
+                }
+                return { text: 'Normal', class: 'normal' };
+            }
+
+            function updateStats(data) {
+                statSuhu.textContent = data.suhu + '°C';
+                statKelembapan.textContent = data.kelembapan + '%';
+                statTekanan.textContent = data.tekanan + ' hPa';
+                statCahaya.textContent = data.cahaya + ' lx';
+
+                const suhuStatus = determineStatus(data.suhu, 'suhu');
+                const humiStatus = determineStatus(data.kelembapan, 'kelembapan');
+                const pressStatus = determineStatus(data.tekanan, 'tekanan');
+                const lightStatus = determineStatus(data.cahaya, 'cahaya');
+
+                trendSuhu.textContent = suhuStatus.text === 'Normal' ? '✅ Stabil' :
+                    suhuStatus.text === 'Waspada' ? '⚠️ Waspada' : '🔴 Tinggi';
+                trendKelembapan.textContent = humiStatus.text === 'Normal' ? '✅ Normal' :
+                    humiStatus.text === 'Tinggi' ? '⚠️ Tinggi' : '⚠️ Rendah';
+                trendTekanan.textContent = pressStatus.text === 'Normal' ? '✅ Stabil' :
+                    pressStatus.text === 'Tinggi' ? '📈 Tinggi' : '📉 Rendah';
+                trendCahaya.textContent = lightStatus.text === 'Normal' ? '✅ Normal' :
+                    lightStatus.text === 'Terang' ? '☀️ Terang' : '🌙 Redup';
+            }
+
+            function updateTable(data) {
+                const sensors = [
+                    { name: 'Suhu', value: data.suhu + '°C', type: 'suhu' },
+                    { name: 'Kelembapan', value: data.kelembapan + '%', type: 'kelembapan' },
+                    { name: 'Tekanan', value: data.tekanan + ' hPa', type: 'tekanan' },
+                    { name: 'Cahaya', value: data.cahaya + ' lx', type: 'cahaya' },
+                ];
+
+                dataTable.innerHTML = sensors
+                    .map((s) => {
+                        const status = determineStatus(parseFloat(s.value), s.type);
+                        return `
+                    <tr>
+                      <td>${data.time}</td>
+                      <td>${s.name}</td>
+                      <td><strong>${s.value}</strong></td>
+                      <td><span class="badge-status ${status.class}">${status.text}</span></td>
+                    </tr>`;
+                    })
+                    .join('');
+            }
+
+            function addActivity(message, dotClass = 'online') {
+                const timeAgo = 'Baru saja';
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="dot ${dotClass}"></span> ${message} <small>${timeAgo}</small>`;
+                activityList.prepend(li);
+                const items = activityList.querySelectorAll('li');
+                if (items.length > 10) {
+                    items[items.length - 1].remove();
+                }
+            }
+
+            function updateChartWithNewData(suhu) {
+                const now = new Date();
+                const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                chartLabels.push(timeStr);
+                chartDataSuhu.push(suhu);
+                if (chartLabels.length > MAX_CHART_POINTS) {
+                    chartLabels.shift();
+                    chartDataSuhu.shift();
+                }
+                updateChartDataset();
+            }
+
+            function updateRelayUI(isOn) {
+                if (isOn) {
+                    relayToggle.checked = true;
+                    relayBadge.textContent = 'ON';
+                    relayBadge.className = 'relay-status-badge on';
+                    relayMessage.textContent = 'Status: Relay menyala, perangkat aktif.';
+                } else {
+                    relayToggle.checked = false;
+                    relayBadge.textContent = 'OFF';
+                    relayBadge.className = 'relay-status-badge off';
+                    relayMessage.textContent = 'Status: Relay dalam keadaan mati.';
+                }
+            }
+
+            function toggleRelay() {
+                const isOn = relayToggle.checked;
+                updateRelayUI(isOn);
+                const dotClass = isOn ? 'online' : 'off';
+                const message = isOn ? 'Relay 1 dinyalakan' : 'Relay 1 dimatikan';
+                addActivity(message, dotClass);
+                showToast(message, 'success');
+            }
+
+            relayToggle.addEventListener('change', toggleRelay);
+
+            function showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `${type === 'success' ? '✅' : '❌'} ${message}`;
+                toastContainer.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(20px)';
+                    toast.style.transition = 'all 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 2500);
+            }
+
+            function setConnectionStatus(online) {
+                const dot = connectionPill.querySelector('.dot');
+                if (online) {
+                    dot.className = 'dot online';
+                    connectionText.textContent = 'Terhubung';
+                } else {
+                    dot.className = 'dot off';
+                    connectionText.textContent = 'Terputus';
+                }
+            }
+
+            function simulateConnection() {
+                const online = Math.random() > 0.05;
+                setConnectionStatus(online);
+                if (!online) {
+                    addActivity('Koneksi terputus sementara', 'off');
+                    showToast('Koneksi terputus, mencoba menyambungkan...', 'error');
+                    setTimeout(() => {
+                        setConnectionStatus(true);
+                        addActivity('Koneksi pulih', 'online');
+                        showToast('Koneksi pulih kembali', 'success');
+                    }, 2000);
+                }
+            }
+
+            rangeSelect.addEventListener('change', function() {
+                const value = this.value;
+                if (value === '24jam') {
+                    resetChartWithInterval(24, 3600000);
+                } else if (value === '7hari') {
+                    resetChartWithInterval(7, 86400000);
+                } else if (value === '30hari') {
+                    resetChartWithInterval(30, 86400000);
+                }
+                showToast(`Grafik diubah ke rentang: ${rangeSelect.options[rangeSelect.selectedIndex].text}`, 'success');
+            });
+
+            function resetChartWithInterval(points, intervalMs) {
+                const now = new Date();
+                chartLabels = [];
+                chartDataSuhu = [];
+                for (let i = points - 1; i >= 0; i--) {
+                    const time = new Date(now - i * intervalMs);
+                    let label;
+                    if (intervalMs >= 86400000) {
+                        label = time.getDate() + '/' + (time.getMonth() + 1);
+                    } else {
+                        label = time.getHours().toString().padStart(2, '0') + ':' + time.getMinutes().toString().padStart(2, '0');
+                    }
+                    chartLabels.push(label);
+                    chartDataSuhu.push(+(27 + Math.random() * 5).toFixed(1));
+                }
+                updateChartDataset();
+            }
+
+            // ==================== SIDEBAR NAVIGATION ====================
+            // Set active class berdasarkan halaman saat ini
+            (function setActiveNav() {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+                document.querySelectorAll('.sidebar-nav a').forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+            })();
+
+            // ==================== LOGOUT ====================
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Apakah Anda yakin ingin keluar?')) {
+                    showToast('Anda telah keluar dari sistem', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 500);
+                }
+            });
+
+            // ==================== MOBILE SIDEBAR ====================
+            function openSidebar() {
+                sidebar.classList.add('open');
+                sidebarOverlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+
+            hamburgerBtn.addEventListener('click', () => {
+                if (sidebar.classList.contains('open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            });
+
+            sidebarOverlay.addEventListener('click', closeSidebar);
+
+            sidebar.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 800) {
+                        setTimeout(closeSidebar, 150);
+                    }
+                });
+            });
+
+            // ==================== DATA FETCH ====================
+            function fetchAndUpdateData() {
+                const data = generateSensorData();
+                updateStats(data);
+                updateTable(data);
+                updateChartWithNewData(data.suhu);
+                if (Math.random() < 0.3) {
+                    const activities = [
+                        { msg: 'Data sensor diperbarui', dot: 'online' },
+                        { msg: 'Suhu ruang server terpantau normal', dot: 'online' },
+                        { msg: 'Kelembapan dalam batas aman', dot: 'online' },
+                    ];
+                    const randomAct = activities[Math.floor(Math.random() * activities.length)];
+                    addActivity(randomAct.msg, randomAct.dot);
+                }
+            }
+
+            // ==================== INITIALIZATION ====================
+            function init() {
+                initializeChartData();
+                createChart();
+                updateRelayUI(false);
+                fetchAndUpdateData();
+                addActivity('Sistem monitoring IoT dimulai', 'online');
+            }
+
+            init();
+            setInterval(fetchAndUpdateData, 5000);
+            setInterval(simulateConnection, 30000);
+            simulateConnection();
+            console.log('✅ Dashboard Monitoring IoT siap digunakan.');
+        })();
+    </script>
 </body>
 </html>

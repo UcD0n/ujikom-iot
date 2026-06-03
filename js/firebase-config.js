@@ -8,13 +8,13 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-aut
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCzBDdHWLMkWN7bH3oJBdri6s5KRBM6EHk",
-  authDomain: "monitoring-iot-29ac6.firebaseapp.com",
-  databaseURL: "https://monitoring-iot-29ac6-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "monitoring-iot-29ac6",
-  storageBucket: "monitoring-iot-29ac6.firebasestorage.app",
-  messagingSenderId: "4724063661",
-  appId: "1:4724063661:web:0a03e34b61072f9fd97524",
+  apiKey: "AIzaSyB1pV2-DuNqUdYSOw4qjRlMvWSvV10grF0",
+  authDomain: "iot---ujikom.firebaseapp.com",
+  databaseURL: "https://iot---ujikom-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "iot---ujikom",
+  storageBucket: "iot---ujikom.firebasestorage.app",
+  messagingSenderId: "1012828515209",
+  appId: "1:1012828515209:web:d011852fd1340c626fcf58",
   measurementId: "G-2Y44SR9LMN"
 };
 
