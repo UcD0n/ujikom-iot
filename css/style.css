@@ -261,7 +261,12 @@ ul {
   font-size: clamp(2.5rem, 6vw, 4rem);
   line-height: 1.1;
   margin-bottom: 25px;
-  font-weight: 700;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .hero-text p {
